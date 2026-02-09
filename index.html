@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Imprim'Express - Impression de documents</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+</head>
+<body>
+
+    <header>
+        <nav>
+<div class="logo">
+    <a href="index.html">
+        <img src="logo-imprim.png" alt="Logo Imprim'Express" id="main-logo">
+    </a>
+</div>
+            <ul>
+                <li><a href="#hero">Accueil</a></li>
+                <li class="nav-panier">
+                    <i class="fas fa-shopping-cart"></i>
+                    <span id="panier-badge">0</span>
+                </li>
+            </ul>
+        </nav>
+    </header>
+
+    <section id="hero">
+        <h1>Vos documents imprimés en un clic</h1>
+        <p>Qualité professionnelle, livraison ultra-rapide</p>
+    </section>
+
+    <div id="commande-container">
+        <div class="card">
+            <h2>1. Configurer l'impression</h2>
+            <div id="promo-banner" style="padding: 10px; border-radius: 8px; margin-bottom: 15px; font-size: 0.9rem; text-align: center; transition: 0.3s;">
+                <i class="fas fa-percentage"></i> OFFRE VOLUME : -20% dès 50 pages !
+            </div>
+
+            <div class="form-group">
+                <label>Fichier PDF</label>
+                <div class="drop-zone" id="drop-zone">
+                    <span class="drop-zone-text">Glissez vos PDF ici ou cliquez</span>
+                    <input type="file" id="fileUpload" hidden accept=".pdf">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>Nombre de pages</label>
+                <input type="number" id="nbPages" min="1" placeholder="Ex: 10">
+            </div>
+
+            <div class="form-group">
+                <label>Options</label>
+                <select id="couleur">
+                    <option value="bw">Noir & Blanc (0.10€/p)</option>
+                    <option value="color">Couleur (0.30€/p)</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label>Livraison</label>
+                <select id="livraison">
+                    <option value="poste">La Poste (+1.50€)</option>
+                    <option value="relais">Point Relais (+2.50€)</option>
+                    <option value="express">Express 24h (+5.00€)</option>
+                </select>
+            </div>
+
+            <div id="relais-container" style="display: none; margin-top: 15px;">
+                <p id="selected-relais" style="font-weight: bold; color: var(--vert-moyen); margin-bottom: 5px;">📍 Sélectionnez un point sur la carte</p>
+                <div id="map" style="height: 200px;"></div>
+            </div>
+
+            <button id="btnAjouterPanier" class="btn">Ajouter au panier</button>
+        </div>
+
+        <div class="card">
+            <h2>2. Votre Panier</h2>
+            <div id="listePanier">
+                <p style="text-align: center; color: #999; padding: 20px;">Votre panier est vide</p>
+            </div>
+
+            <div class="panier-details">
+                <div class="detail-line">
+                    <span>Sous-total HT</span>
+                    <span id="sousTotalHT">0.00 €</span>
+                </div>
+                <div class="detail-line">
+                    <span>Livraison</span>
+                    <span id="fraisLivraison">0.00 €</span>
+                </div>
+                <div class="detail-line">
+                    <span>TVA (20%)</span>
+                    <span id="tva">0.00 €</span>
+                </div>
+                <div class="total-box-finale">
+                    <span>TOTAL TTC</span>
+                    <span id="prixTotal">0.00 €</span>
+                </div>
+            </div>
+
+            <button id="btnCommander" class="btn-primary" style="margin-top: 20px; background: #27ae60;">
+                <i class="fas fa-lock"></i> Passer la commande
+            </button>
+        </div>
+    </div>
+
+    <div id="loader-commande" class="modal" style="display: none; background-color: rgba(255,255,255,0.98);">
+        <div class="modal-content" style="box-shadow: none; text-align: center; background: transparent; margin-top: 10%;">
+            <div class="printer-reservation-zone">
+                <div class="printer-container">
+                    <div class="printer-body"></div>
+                    <div class="printer-paper-slot"></div>
+                    <div id="printer-paper" class="printer-paper">
+                        <div class="paper-lines"></div>
+                    </div>
+                </div>
+            </div>
+            <h3 style="color: #1b4332; margin-top: 20px;">Vérification de vos fichiers...</h3>
+            <p id="loader-status" style="color: #666;">Préparation de l'espace sécurisé</p>
+        </div>
+    </div>
+
+    <div id="paymentModal" class="modal">
+        <div class="modal-content payment-terminal">
+            <span id="cancel-payment">&times;</span>
+            
+            <div class="terminal-header-design">
+                <div class="chip-modern"></div>
+                <div>
+                    <i class="fab fa-cc-visa" style="font-size: 1.5rem; color: #1e293b;"></i>
+                    <i class="fab fa-cc-mastercard" style="font-size: 1.5rem; color: #1e293b; margin-left: 8px;"></i>
+                </div>
+            </div>
+
+            <div class="terminal-screen">
+                <p style="margin: 0; font-size: 0.7rem; opacity: 0.8; letter-spacing: 1px;">MONTANT TTC</p>
+                <h2 id="montantFinal">0.00 €</h2>
+                <p id="terminalStatus" style="font-size: 0.9rem; margin-top: 5px;">Insérez votre carte</p>
+                
+                <div id="progress-container" style="display: none; background: #334155; height: 4px; border-radius: 10px; margin-top: 15px;">
+                    <div id="progress-bar" style="width: 0%; height: 100%; background: #38bdf8; transition: width 0.1s;"></div>
+                </div>
+            </div>
+
+            <form id="paymentForm">
+                <div class="form-group" style="margin-bottom: 10px;">
+                    <input type="text" id="cardNumber" placeholder="Numéro de carte : 0000 0000 0000 0000" maxlength="19" required>
+                </div>
+                <div style="display: flex; gap: 10px;">
+                    <input type="text" placeholder="MM/YY" maxlength="5" required>
+                    <input type="text" placeholder="CVC" maxlength="3" required>
+                </div>
+                <button type="submit" class="btn-terminal" style="margin-top: 20px;">VALIDER LE PAIEMENT</button>
+            </form>
+
+            <div id="successMessage" style="display: none; text-align: center; padding: 30px;">
+                <i class="fas fa-check-circle" style="font-size: 3rem; color: #2ecc71;"></i>
+                <h3 style="margin-top: 15px;">Paiement Réussi !</h3>
+                <p>Impression lancée...</p>
+            </div>
+        </div>
+    </div>
+
+    <footer>
+        <p>&copy; 2026 Imprim'Express - Service de reprographie en ligne</p>
+    </footer>
+
+    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>
